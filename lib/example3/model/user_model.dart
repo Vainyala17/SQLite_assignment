@@ -15,6 +15,9 @@ class UserModel {
   final String? photoPath; // Local image path
   final String timestamp;
   final String address;
+  final String? password; // add this
+  final String? token;    // add this
+
 
 
   UserModel({
@@ -33,6 +36,9 @@ class UserModel {
     this.photoPath,
     required this.timestamp,
     required this.address,
+    this.password,
+    this.token,
+
   });
 
   Map<String, dynamic> toMap() {
@@ -51,6 +57,9 @@ class UserModel {
       'pgSubject': pgSubject,
       'photoPath': photoPath,
       'timestamp': timestamp,
+      'password': password,
+      'token': token,
+
     };
   }
 
@@ -71,6 +80,9 @@ class UserModel {
       photoPath: map['photoPath'],
       timestamp: map['timestamp'] ?? '',
       address: map['address'] ?? '',
+      password: map['password'],
+      token: map['token'],
+
     );
   }
 

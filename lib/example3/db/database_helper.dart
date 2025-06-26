@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 import '../model/user_model.dart';
 
 class DatabaseHelper {
@@ -21,7 +23,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // Increased version for schema update
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -43,7 +45,9 @@ class DatabaseHelper {
     subject3 TEXT,
     pgSubject TEXT,
     photoPath TEXT,
-    timestamp TEXT NOT NULL
+    timestamp TEXT NOT NULL,
+    password TEXT NOT NULL,
+    token TEXT
   )
 ''');
     await db.execute('''
@@ -52,11 +56,161 @@ class DatabaseHelper {
     address TEXT NOT NULL,
     FOREIGN KEY (address_id) REFERENCES users(id) ON DELETE CASCADE)
 ''');
-
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle database upgrades if needed in the future
+    if (oldVersion < 2) {
+      // Add password and token columns if they don't exist
+      await db.execute('ALTER TABLE users ADD COLUMN password TEXT');
+      await db.execute('ALTER TABLE users ADD COLUMN token TEXT');
+    }
+  }
+
+  // Hash password for security
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password);
+    var digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  // Generate simple token
+  String _generateToken() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  // Register new user
+  Future<Map<String, dynamic>> registerUser(String mobile, String password) async {
+    final db = await database;
+    try {
+      // Check if mobile already exists
+      final existingUser = await getUserByMobile(mobile);
+      if (existingUser != null) {
+        return {'success': false, 'message': 'Mobile number already registered'};
+      }
+
+      // Hash password and generate token
+      String hashedPassword = _hashPassword(password);
+      String token = _generateToken();
+
+      // Create minimal user for registration
+      await db.insert('users', {
+        'name': '', // Will be updated later in personal details
+        'mobile': mobile,
+        'email': '', // Will be updated later
+        'gender': '',
+        'maritalStatus': '',
+        'state': '',
+        'educationalQualification': '',
+        'timestamp': DateTime.now().toIso8601String(),
+        'password': hashedPassword,
+        'token': token,
+      });
+
+      return {
+        'success': true,
+        'message': 'Registration successful',
+        'token': token,
+        'mobile': mobile
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Registration failed: ${e.toString()}'};
+    }
+  }
+
+  // Login user
+  Future<Map<String, dynamic>> loginUser(String mobile, String password) async {
+    final db = await database;
+    try {
+      String hashedPassword = _hashPassword(password);
+
+      final result = await db.query(
+        'users',
+        where: 'mobile = ? AND password = ?',
+        whereArgs: [mobile, hashedPassword],
+      );
+
+      if (result.isNotEmpty) {
+        // Generate new token on login
+        String newToken = _generateToken();
+        await db.update(
+          'users',
+          {'token': newToken},
+          where: 'mobile = ?',
+          whereArgs: [mobile],
+        );
+
+        UserModel user = UserModel.fromMap(result.first);
+        return {
+          'success': true,
+          'message': 'Login successful',
+          'token': newToken,
+          'user': user,
+        };
+      } else {
+        return {'success': false, 'message': 'Invalid mobile number or password'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Login failed: ${e.toString()}'};
+    }
+  }
+
+  // Verify token
+  Future<UserModel?> getUserByToken(String token) async {
+    final db = await database;
+    try {
+      final result = await db.query('users', where: 'token = ?', whereArgs: [token]);
+      if (result.isNotEmpty) {
+        return UserModel.fromMap(result.first);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Update password
+  Future<bool> updatePassword(String mobile, String oldPassword, String newPassword) async {
+    final db = await database;
+    try {
+      String hashedOldPassword = _hashPassword(oldPassword);
+      String hashedNewPassword = _hashPassword(newPassword);
+
+      // Verify old password
+      final result = await db.query(
+        'users',
+        where: 'mobile = ? AND password = ?',
+        whereArgs: [mobile, hashedOldPassword],
+      );
+
+      if (result.isNotEmpty) {
+        await db.update(
+          'users',
+          {'password': hashedNewPassword},
+          where: 'mobile = ?',
+          whereArgs: [mobile],
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Logout user (clear token)
+  Future<bool> logoutUser(String token) async {
+    final db = await database;
+    try {
+      await db.update(
+        'users',
+        {'token': null},
+        where: 'token = ?',
+        whereArgs: [token],
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<int> insertUser(UserModel user) async {
@@ -77,7 +231,7 @@ class DatabaseHelper {
           'address_id': userId,
           'address': address,
         },
-        conflictAlgorithm: ConflictAlgorithm.replace, // or fail
+        conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } catch (e) {
       throw Exception('Failed to insert address: ${e.toString()}');
@@ -93,21 +247,16 @@ class DatabaseHelper {
         where: 'address_id = ?',
         whereArgs: [userId],
       );
-      // If no rows were updated, throw a manual exception
       if (count == 0) {
         throw Exception('No address found with address_id = $userId');
       }
       return count;
     } catch (e, stacktrace) {
-      // Print full error details in debug console
       print('Update Error: $e');
       print('Stacktrace: $stacktrace');
-
-      // Now this message will be shown wherever you catch it (like in Snackbar)
       throw Exception('Failed to update address: ${e.toString()}');
     }
   }
-
 
   Future<int> deleteAddress(int userId) async {
     final db = await database;
@@ -117,7 +266,6 @@ class DatabaseHelper {
       throw Exception('Failed to delete address: ${e.toString()}');
     }
   }
-
 
   Future<List<UserModel>> getAllUsers() async {
     final db = await database;
@@ -136,7 +284,6 @@ class DatabaseHelper {
       throw Exception('Failed to fetch users: ${e.toString()}');
     }
   }
-
 
   Future<UserModel?> getUserById(int id) async {
     final db = await database;
@@ -221,6 +368,6 @@ class DatabaseHelper {
   }
 
   Future queryAllRows() async {
-
+    // Implementation if needed
   }
 }
