@@ -33,7 +33,7 @@ class _PlainScreenState extends State<PlainScreen> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
+          (Route<dynamic> route) => false,
     );
   }
 

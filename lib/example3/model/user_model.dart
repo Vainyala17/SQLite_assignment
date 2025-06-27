@@ -1,5 +1,4 @@
 class UserModel {
-
   final int? id;
   final String name;
   final String mobile;
@@ -15,10 +14,6 @@ class UserModel {
   final String? photoPath; // Local image path
   final String timestamp;
   final String address;
-  final String? password; // add this
-  final String? token;    // add this
-
-
 
   UserModel({
     this.id,
@@ -36,11 +31,9 @@ class UserModel {
     this.photoPath,
     required this.timestamp,
     required this.address,
-    required this.password,
-    this.token,
-
   });
 
+  // ✅ FIXED: Separate method for users table (without address)
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -57,9 +50,29 @@ class UserModel {
       'pgSubject': pgSubject,
       'photoPath': photoPath,
       'timestamp': timestamp,
-      'password': password,
-      'token': token,
+      // ❌ REMOVED: Don't include address in users table map
+      // 'address': address,
+    };
+  }
 
+  // ✅ NEW: Method to get complete map including address (for UI/display purposes)
+  Map<String, dynamic> toCompleteMap() {
+    return {
+      'id': id,
+      'name': name,
+      'mobile': mobile,
+      'email': email,
+      'gender': gender,
+      'maritalStatus': maritalStatus,
+      'state': state,
+      'educationalQualification': educationalQualification,
+      'subject1': subject1,
+      'subject2': subject2,
+      'subject3': subject3,
+      'pgSubject': pgSubject,
+      'photoPath': photoPath,
+      'timestamp': timestamp,
+      'address': address,
     };
   }
 
@@ -80,9 +93,6 @@ class UserModel {
       photoPath: map['photoPath'],
       timestamp: map['timestamp'] ?? '',
       address: map['address'] ?? '',
-      password: map['password'],
-      token: map['token'],
-
     );
   }
 
@@ -108,7 +118,7 @@ class UserModel {
 
   // Helper method to simulate Firebase document data() method
   Map<String, dynamic> data() {
-    final data = toMap();
+    final data = toCompleteMap(); // Use complete map here
 
     // Add subjects in the format expected by the UI
     if (educationalQualification == 'Graduate') {
@@ -125,9 +135,6 @@ class UserModel {
     if (photoPath != null) {
       data['photoUrl'] = photoPath;
     }
-
-    // ✅ THIS WAS MISSING
-    data['address'] = address;
 
     return data;
   }

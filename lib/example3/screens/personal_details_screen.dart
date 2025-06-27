@@ -6,10 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-
+import '../widgets/custom_menu.dart';
 import '../model/user_model.dart';
 import '../../example3/db/database_helper.dart';
 import 'fetch_data_screen.dart';
+import 'login_screen.dart';
+// import 'login_screen.dart'; // Add this import for your LoginScreen
 
 class PersonalDetailsScreen extends StatefulWidget {
   final UserModel? editUser;
@@ -86,6 +88,16 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       }
     }
   }
+  void _refreshPage() {
+    setState(() {
+      if (!_isEditMode) {
+        _clearForm();
+      } else {
+        _loadUserDataForEdit();
+      }
+    });
+    _showSnackBar('Page refreshed successfully!');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +107,12 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         centerTitle: true,
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          CustomMenu(
+            context: context,
+            onRefresh: _refreshPage,
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -729,7 +747,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
 
     try {
       // Check if mobile number already exists
-      final bool mobileExists = await _checkMobileExists(
+      final bool mobileExists = await DatabaseHelper.instance.isMobileExists(
           _mobileController.text.trim(),
           excludeId: _isEditMode ? widget.editUser?.id : null
       );
@@ -758,15 +776,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         photoPath = _existingPhotoPath;
       }
 
-      String userPassword;
-      if (_isEditMode && widget.editUser != null) {
-        // Get existing password from the user being edited
-        final userData = widget.editUser!.data();
-        userPassword = userData['password'] ?? _hashPassword('dummy123');
-      } else {
-        // For new users, create a default password
-        userPassword = _hashPassword('dummy123');
-      }
       // Create data map to insert/update
       final user = UserModel(
         id: _isEditMode ? widget.editUser?.id : null,
@@ -784,13 +793,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         photoPath: photoPath,
         timestamp: DateTime.now().toIso8601String(),
         address: _addressController.text.trim(),
-        password: userPassword, // or fetch real one if available
-        token: null,
       );
-      // Debug print to check if password is set
-      print('User password: ${user.password}');
-      print('User map: ${user.toMap()}');
-      // Save to database
       try {
         if (_isEditMode) {
           await DatabaseHelper.instance.updateUser(user);
@@ -837,11 +840,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         duration: Duration(seconds: 3),
       ),
     );
-  }
-
-  String _hashPassword(String password) {
-    var bytes = utf8.encode(password);
-    return sha256.convert(bytes).toString();
   }
 
   @override

@@ -1,17 +1,29 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/custom_drawer.dart';
+import '../widgets/custom_menu.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // You can add state variables here later if needed
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Personal Details App'),
         centerTitle: true,
+        actions: [
+          CustomMenu(
+            context: context,
+            onRefresh: _refreshPage, // ✅ calling refresh
+          ),
+        ],
       ),
-
       drawer: CustomDrawer(),
       body: Container(
         decoration: BoxDecoration(
@@ -52,6 +64,16 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _refreshPage() {
+    setState(() {
+      // Add logic to refresh or reload anything here if needed
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Page refreshed successfully!')),
     );
   }
 }
