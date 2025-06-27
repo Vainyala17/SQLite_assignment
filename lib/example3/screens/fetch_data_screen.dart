@@ -5,6 +5,7 @@ import 'dart:io';
 
 import '../../example3/db/database_helper.dart';
 import '../model/user_model.dart';
+import '../widgets/custom_menu.dart';
 
 class FetchDataScreen extends StatefulWidget {
   @override
@@ -34,6 +35,10 @@ class _FetchDataScreenState extends State<FetchDataScreen> {
       setState(() => _isLoading = false);
     }
   }
+  void _refreshPage() {
+    _fetchData(); // Just reload the data
+    _showSnackBar('Page refreshed successfully!');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +52,9 @@ class _FetchDataScreenState extends State<FetchDataScreen> {
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, size: 24),
-            onPressed: _fetchData,
+          CustomMenu(
+            context: context,
+            onRefresh: _refreshPage,
           ),
         ],
       ),

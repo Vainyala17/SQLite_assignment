@@ -7,6 +7,8 @@ import 'example3/widgets/custom_drawer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await DatabaseHelper.instance.deleteDatabase();
   await DatabaseHelper.instance.database;
   runApp(MyApp());
 }

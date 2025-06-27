@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../db/database_helper.dart';
 import 'register_screen.dart';
-import 'plain_screen.dart'; // Changed from personal_details_screen to plain_screen
+import 'plain_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _hasNavigated = false; // ✅ Add flag to prevent multiple navigations
 
   @override
   void initState() {
@@ -27,20 +28,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Check if user is already logged in
   _checkLoginStatus() async {
+    if (_hasNavigated) return; // ✅ Prevent multiple checks
+
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('auth_token');
 
-    if (token != null) {
-      // Verify token with database
+    if (token != null && token.isNotEmpty) {
       final user = await DatabaseHelper.instance.getUserByToken(token);
-      if (user != null) {
-        // User is already logged in, navigate to plain screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PlainScreen()),
-        );
+      if (user != null && mounted && !_hasNavigated) {
+        _hasNavigated = true; // ✅ Set flag before navigation
+        // Navigate to PlainScreen if valid token
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PlainScreen()),
+            );
+          }
+        });
       } else {
-        // Invalid token, clear it
+        // Remove invalid token
         await prefs.remove('auth_token');
         await prefs.remove('user_mobile');
       }
@@ -48,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   _login() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || _hasNavigated) return; // ✅ Check flag
 
     setState(() {
       _isLoading = true;
@@ -60,7 +67,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text.trim(),
       );
 
-      if (result['success']) {
+      if (result['success'] && mounted && !_hasNavigated) {
+        _hasNavigated = true; // ✅ Set flag before navigation
+
         _mobileController.clear();
         _passwordController.clear();
 
@@ -72,22 +81,26 @@ class _LoginScreenState extends State<LoginScreen> {
           await prefs.setString('user_mobile', user.mobile);
         }
 
-
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message']),
-            duration: Duration(seconds: 3), // default is 4s, can adjust
+            duration: Duration(seconds: 2), // ✅ Reduced duration
             backgroundColor: Colors.green,
           ),
         );
 
-        // Navigate to plain screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PlainScreen()),
-        );
-      } else {
+        // ✅ Add small delay to show success message
+        await Future.delayed(Duration(milliseconds: 500));
+
+       // Navigate to plain screen
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const PlainScreen()),
+          );
+        }
+      } else if (result['success'] == false) {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -97,17 +110,21 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
-    setState(() {
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -147,34 +164,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     // Mobile Number Field
                     TextFormField(
-                    controller: _mobileController,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: 'Mobile Number *',
-                      hintText: 'Enter 10-digit mobile number',
-                      prefixIcon: Icon(Icons.phone),
-                      helperText: 'Must start with 6, 7, 8, or 9',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      controller: _mobileController,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      decoration: InputDecoration(
+                        labelText: 'Mobile Number *',
+                        hintText: 'Enter 10-digit mobile number',
+                        prefixIcon: Icon(Icons.phone),
+                        helperText: 'Must start with 6, 7, 8, or 9',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Mobile number is required';
+                        }
+                        if (value.length != 10) {
+                          return 'Mobile number must be 10 digits';
+                        }
+                        if (!['9', '8', '7', '6'].contains(value[0])) {
+                          return 'Mobile number must start with 6, 7, 8, or 9';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Mobile number is required';
-                      }
-                      if (value.length != 10) {
-                        return 'Mobile number must be 10 digits';
-                      }
-                      if (!['9', '8', '7', '6'].contains(value[0])) {
-                        return 'Mobile number must start with 6, 7, 8, or 9';
-                      }
-                      return null;
-                    },
-                  ),
                     const SizedBox(height: 20),
 
                     // Password Field
