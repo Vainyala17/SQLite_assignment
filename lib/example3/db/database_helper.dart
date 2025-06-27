@@ -46,8 +46,6 @@ class DatabaseHelper {
     pgSubject TEXT,
     photoPath TEXT,
     timestamp TEXT NOT NULL,
-    password TEXT NOT NULL,
-    token TEXT
   )
 ''');
     await db.execute('''
@@ -56,6 +54,12 @@ class DatabaseHelper {
     address TEXT NOT NULL,
     FOREIGN KEY (address_id) REFERENCES users(id) ON DELETE CASCADE)
 ''');
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS login(
+    mobile INTEGER,
+    password TEXT,
+    token TEXT,
+    ''');
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -72,12 +76,10 @@ class DatabaseHelper {
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
-
   // Generate simple token
   String _generateToken() {
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
-
   // Register new user
   Future<Map<String, dynamic>> registerUser(String mobile, String password) async {
     final db = await database;
@@ -87,7 +89,6 @@ class DatabaseHelper {
       if (existingUser != null) {
         return {'success': false, 'message': 'Mobile number already registered'};
       }
-
       // Hash password and generate token
       String hashedPassword = _hashPassword(password);
       String token = _generateToken();
@@ -124,7 +125,7 @@ class DatabaseHelper {
       String hashedPassword = _hashPassword(password);
 
       final result = await db.query(
-        'users',
+        'login',
         where: 'mobile = ? AND password = ?',
         whereArgs: [mobile, hashedPassword],
       );
@@ -147,7 +148,7 @@ class DatabaseHelper {
           'user': user,
         };
       } else {
-        return {'success': false, 'message': 'Invalid mobile number or password'};
+        return {'success': false, 'message': 'Mobile number and Password not match'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Login failed: ${e.toString()}'};
@@ -367,7 +368,14 @@ class DatabaseHelper {
     _database = null;
   }
 
-  Future queryAllRows() async {
-    // Implementation if needed
+  // Add this method to your DatabaseHelper class
+
+  Future<List<Map<String, dynamic>>> queryAllRows() async {
+    final db = await database;
+    try {
+      return await db.query('users');
+    } catch (e) {
+      throw Exception('Failed to query all rows: ${e.toString()}');
+    }
   }
 }

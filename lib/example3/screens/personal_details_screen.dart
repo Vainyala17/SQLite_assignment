@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -92,43 +95,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         centerTitle: true,
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
-      ),
-      drawer: _isEditMode ? null : Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.person_add),
-              title: Text('Personal Details'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.list),
-              title: Text('Fetch Data'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => FetchDataScreen()),
-                );
-              },
-            ),
-          ],
-        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -792,6 +758,15 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         photoPath = _existingPhotoPath;
       }
 
+      String userPassword;
+      if (_isEditMode && widget.editUser != null) {
+        // Get existing password from the user being edited
+        final userData = widget.editUser!.data();
+        userPassword = userData['password'] ?? _hashPassword('dummy123');
+      } else {
+        // For new users, create a default password
+        userPassword = _hashPassword('dummy123');
+      }
       // Create data map to insert/update
       final user = UserModel(
         id: _isEditMode ? widget.editUser?.id : null,
@@ -809,8 +784,12 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         photoPath: photoPath,
         timestamp: DateTime.now().toIso8601String(),
         address: _addressController.text.trim(),
+        password: userPassword, // or fetch real one if available
+        token: null,
       );
-
+      // Debug print to check if password is set
+      print('User password: ${user.password}');
+      print('User map: ${user.toMap()}');
       // Save to database
       try {
         if (_isEditMode) {
@@ -823,7 +802,12 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
           _showSnackBar('Data saved successfully!');
         }
       } catch (e) {
-        _showSnackBar('Update address error: ${e.toString()}', isError: true);
+        print('Database operation error: $e');
+        _showSnackBar('Database error: ${e.toString()}', isError: true);
+        setState(() {
+          _isLoading = false;
+        });
+        return;
       }
 
       Navigator.pushReplacement(
@@ -853,6 +837,11 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         duration: Duration(seconds: 3),
       ),
     );
+  }
+
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password);
+    return sha256.convert(bytes).toString();
   }
 
   @override

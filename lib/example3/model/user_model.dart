@@ -36,7 +36,7 @@ class UserModel {
     this.photoPath,
     required this.timestamp,
     required this.address,
-    this.password,
+    required this.password,
     this.token,
 
   });
