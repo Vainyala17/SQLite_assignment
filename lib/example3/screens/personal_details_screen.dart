@@ -29,6 +29,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   final TextEditingController _pgSubjectController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
+
   // Form variables
   String _selectedGender = '';
   String _selectedMaritalStatus = '';
