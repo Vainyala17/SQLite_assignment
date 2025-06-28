@@ -107,16 +107,16 @@ CREATE TABLE IF NOT EXISTS users (
       String token = _generateToken();
 
       // Insert into users table with default values
-      await db.insert('users', {
-        'name': 'NA',
-        'mobile': mobile,
-        'email': 'NA@example.com',
-        'gender': 'NA',
-        'maritalStatus': 'NA',
-        'state': 'NA',
-        'educationalQualification': 'NA',
-        'timestamp': DateTime.now().toIso8601String(),
-      });
+      // await db.insert('users', {
+      //   'name': 'NA',
+      //   'mobile': mobile,
+      //   'email': 'NA@example.com',
+      //   'gender': 'NA',
+      //   'maritalStatus': 'NA',
+      //   'state': 'NA',
+      //   'educationalQualification': 'NA',
+      //   'timestamp': DateTime.now().toIso8601String(),
+      // });
 
       // Insert into login table
       await db.insert('login', {
