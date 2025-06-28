@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/login_screen.dart'; // Update the path if needed
 
 class CustomMenu extends StatelessWidget {
@@ -39,12 +40,18 @@ class CustomMenu extends StatelessWidget {
     );
   }
 
-  void _logout() {
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_mobile');
+
+    // Navigate to login and clear stack
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
           (Route<dynamic> route) => false,
     );
   }
+
 
   @override
   Widget build(BuildContext _) {
