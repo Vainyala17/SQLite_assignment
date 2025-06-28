@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result['success'] && mounted && !_hasNavigated) {
-        _hasNavigated = true; // ✅ Set flag before navigation
+        _hasNavigated = true; //  Set flag before navigation
 
         _mobileController.clear();
         _passwordController.clear();
