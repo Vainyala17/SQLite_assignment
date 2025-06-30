@@ -405,6 +405,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         labelText: 'Email Address *',
         hintText: 'Enter your email',
         prefixIcon: Icon(Icons.email),
+        helperText: 'Email should contain @ and domain',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -720,21 +721,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
     }
   }
 
-  // Check if mobile exists method - implement this in your database helper
-  Future<bool> _checkMobileExists(String mobile, {int? excludeId}) async {
-    try {
-      final users = await DatabaseHelper.instance.queryAllRows();
-      for (var user in users) {
-        if (user['mobile'] == mobile && (excludeId == null || user['id'] != excludeId)) {
-          return true;
-        }
-      }
-      return false;
-    } catch (e) {
-      print('Error checking mobile exists: $e');
-      return false;
-    }
-  }
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {

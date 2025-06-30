@@ -20,12 +20,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       userMobile = prefs.getString('user_mobile') ?? 'Unknown';
       userRole = prefs.getString('user_role') ?? 'Unknown';
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -44,45 +45,60 @@ class _HomePageState extends State<HomePage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.blue[50]!, Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade200, Colors.white],
           ),
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.person_outline,
-                size: 80,
-                color: Colors.blue[600],
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Hi, welcome user!',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.emoji_emotions, size: 80, color: Colors.orange),
+                SizedBox(height: 20),
+                Text(
+                  '🎉 Congratulations!',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey[900],
+                  ),
                 ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                'Your mobile number is: $userMobile',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              ),
-              SizedBox(height: 5),
-              Text(
-                'Your role is: $userRole',
-                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-              ),
-              SizedBox(height: 30),
-              Text(
-                'Use the drawer menu to navigate',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-              ),
-            ],
+                SizedBox(height: 10),
+                Text(
+                  'Welcome to the Personal Details App',
+                  style: TextStyle(fontSize: 18, color: Colors.grey[800]),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text('📱 Mobile Number:', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+                        SizedBox(height: 4),
+                        Text(userMobile, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 12),
+                        Text('🔐 Role:', style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+                        SizedBox(height: 4),
+                        Text(userRole, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30),
+                Text(
+                  'Use the drawer menu to explore features.',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       ),
