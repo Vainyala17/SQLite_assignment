@@ -22,6 +22,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
 
+  // Role dropdown variables
+  String? _selectedRole;
+  final List<String> _roles = ['Operator', 'Supervisor', 'Manager'];
+
   _register() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -43,6 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final result = await DatabaseHelper.instance.registerUser(
         _mobileController.text.trim(),
         _passwordController.text.trim(),
+        _selectedRole, // Pass the selected role to the database helper
       );
 
       if (result['success']) {
@@ -50,6 +55,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', result['token']);
         await prefs.setString('user_mobile', result['mobile']);
+        await prefs.setString('user_role', result['role'] ?? _selectedRole ?? '');
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Navigate to personal details screen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => LoginScreen()),
         );
       } else {
         // Show error message
@@ -241,6 +247,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         }
                         if (value != _passwordController.text) {
                           return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Role Dropdown Field
+                    DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      decoration: InputDecoration(
+                        labelText: 'Role *',
+                        hintText: 'Select your role',
+                        prefixIcon: const Icon(Icons.work),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      items: _roles.map((String role) {
+                        return DropdownMenuItem<String>(
+                          value: role,
+                          child: Text(role),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedRole = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a role';
                         }
                         return null;
                       },

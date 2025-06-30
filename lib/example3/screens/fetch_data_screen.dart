@@ -8,19 +8,27 @@ import '../model/user_model.dart';
 import '../widgets/custom_menu.dart';
 
 class FetchDataScreen extends StatefulWidget {
+  final String role;
+
+  const FetchDataScreen({Key? key, required this.role}) : super(key: key);
+
   @override
   _FetchDataScreenState createState() => _FetchDataScreenState();
 }
 
+
 class _FetchDataScreenState extends State<FetchDataScreen> {
   List<UserModel> _userData = [];
   bool _isLoading = true;
+  late String role;
 
   @override
   void initState() {
     super.initState();
+    role = widget.role;
     _fetchData();
   }
+
 
   Future<void> _fetchData() async {
     try {
@@ -89,7 +97,7 @@ class _FetchDataScreenState extends State<FetchDataScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PersonalDetailsScreen(),
+              builder: (context) => PersonalDetailsScreen(role: role,),
             ),
           ).then((result) {
             if (result == true) {
@@ -137,7 +145,7 @@ class _FetchDataScreenState extends State<FetchDataScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PersonalDetailsScreen(),
+                  builder: (context) => PersonalDetailsScreen(role: role,),
                 ),
               ).then((result) {
                 if (result == true) {
@@ -227,41 +235,56 @@ class _FetchDataScreenState extends State<FetchDataScreen> {
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  iconSize: 28,
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _navigateToEditScreen(user);
-                    } else if (value == 'delete') {
-                      _showDeleteDialog(user);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, size: 24, color: Colors.blue),
-                          SizedBox(width: 12),
-                          Text('Edit', style: TextStyle(fontSize: 16)),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, size: 24, color: Colors.red),
-                          SizedBox(width: 12),
-                          Text(
-                            'Delete',
-                            style: TextStyle(color: Colors.red, fontSize: 16),
+                if (role == 'Supervisor' || role == 'Manager')
+                  PopupMenuButton<String>(
+                    iconSize: 28,
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        _navigateToEditScreen(user);
+                      } else if (value == 'delete') {
+                        _showDeleteDialog(user);
+                      }
+                    },
+                    itemBuilder: (context) {
+                      List<PopupMenuEntry<String>> items = [];
+
+                      // Add Edit option for Supervisor and Manager
+                      if (role == 'Supervisor' || role == 'Manager') {
+                        items.add(
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, size: 24, color: Colors.blue),
+                                SizedBox(width: 12),
+                                Text('Edit', style: TextStyle(fontSize: 16)),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                        );
+                      }
+
+                      // Add Delete only for Manager
+                      if (role == 'Manager') {
+                        items.add(
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, size: 24, color: Colors.red),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red, fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      return items;
+                    },
+                  ),
               ],
             ),
             Divider(thickness: 1.5, height: 24),
@@ -380,7 +403,7 @@ class _FetchDataScreenState extends State<FetchDataScreen> {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PersonalDetailsScreen(editUser: user),
+          builder: (context) => PersonalDetailsScreen(editUser: user, role: role,),
         ),
       );
 

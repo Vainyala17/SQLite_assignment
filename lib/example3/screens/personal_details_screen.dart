@@ -15,7 +15,10 @@ import 'login_screen.dart';
 
 class PersonalDetailsScreen extends StatefulWidget {
   final UserModel? editUser;
-  const PersonalDetailsScreen({Key? key, this.editUser}) : super(key: key);
+  final String role;
+
+  const PersonalDetailsScreen({Key? key, this.editUser, required this.role}) : super(key: key);
+
   @override
   _PersonalDetailsScreenState createState() => _PersonalDetailsScreenState();
 }
@@ -46,7 +49,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   bool _isEditMode = false;
-
+  late String role;
   @override
   void initState() {
     super.initState();
@@ -60,6 +63,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         );
       }
     });
+    role = widget.role;
     _loadUserDataForEdit();
   }
 
@@ -199,7 +203,7 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
 
   Widget _buildNameField() {
     return TextFormField(
-      controller: _nameController,
+      controller: _nameController,// <-- Only allow editing if role is Manager
       inputFormatters: [
         LengthLimitingTextInputFormatter(25),
       ],
@@ -813,9 +817,11 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
         return;
       }
 
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => FetchDataScreen()),
+        MaterialPageRoute(
+          builder: (context) => FetchDataScreen(role: role),
+        ),
       );
 
     } catch (e) {
