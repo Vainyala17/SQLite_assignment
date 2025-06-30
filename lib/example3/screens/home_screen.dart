@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/custom_drawer.dart';
 import '../widgets/custom_menu.dart';
@@ -9,7 +10,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // You can add state variables here later if needed
+  String userMobile = '';
+  String userRole = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userMobile = prefs.getString('user_mobile') ?? 'Unknown';
+      userRole = prefs.getString('user_role') ?? 'Unknown';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +36,11 @@ class _HomePageState extends State<HomePage> {
         actions: [
           CustomMenu(
             context: context,
-            onRefresh: _refreshPage, // ✅ calling refresh
+            onRefresh: _refreshPage,
           ),
         ],
       ),
-      drawer: CustomDrawer(),
+      drawer: CustomDrawer(role: userRole), // ✅ Pass role to drawer
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -44,21 +60,27 @@ class _HomePageState extends State<HomePage> {
               ),
               SizedBox(height: 20),
               Text(
-                'Welcome',
+                'Hi, welcome user!',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey[800],
                 ),
-                textAlign: TextAlign.center,
               ),
               SizedBox(height: 10),
               Text(
+                'Your mobile number is: $userMobile',
+                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Your role is: $userRole',
+                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 30),
+              Text(
                 'Use the drawer menu to navigate',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -68,10 +90,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _refreshPage() {
-    setState(() {
-      // Add logic to refresh or reload anything here if needed
-    });
-
+    setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Page refreshed successfully!')),
     );

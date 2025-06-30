@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'example3/db/database_helper.dart';
-import 'example3/screens/fetch_data_screen.dart';
-import 'example3/screens/login_screen.dart'; // 👈 Add this
-import 'example3/widgets/custom_drawer.dart';
+import 'example3/screens/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

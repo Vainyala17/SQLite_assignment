@@ -59,12 +59,14 @@ CREATE TABLE IF NOT EXISTS users (
   ''');
 
     await db.execute('''
-    CREATE TABLE IF NOT EXISTS login (
-      mobile TEXT PRIMARY KEY,
-      password TEXT NOT NULL,
-      token TEXT
-    )
-  ''');
+  CREATE TABLE IF NOT EXISTS login (
+    mobile TEXT PRIMARY KEY,
+    password TEXT NOT NULL,
+    token TEXT,
+    role TEXT
+  )
+''');
+
   }
 
 
@@ -72,12 +74,14 @@ CREATE TABLE IF NOT EXISTS users (
     if (oldVersion < 2) {
       await db.execute('DROP TABLE IF EXISTS login');
       await db.execute('''
-      CREATE TABLE IF NOT EXISTS login (
-        mobile TEXT PRIMARY KEY,
-        password TEXT NOT NULL,
-        token TEXT
-      )
-    ''');
+  CREATE TABLE IF NOT EXISTS login (
+    mobile TEXT PRIMARY KEY,
+    password TEXT NOT NULL,
+    token TEXT,
+    role TEXT
+  )
+''');
+
     }
   }
 
@@ -93,48 +97,38 @@ CREATE TABLE IF NOT EXISTS users (
     return DateTime.now().millisecondsSinceEpoch.toString();
   }
   // Register new user
-  Future<Map<String, dynamic>> registerUser(String mobile, String password) async {
+  // Register new user
+  Future<Map<String, dynamic>> registerUser(String mobile, String password, String? selectedRole) async {
     final db = await database;
     try {
-      // Check if mobile already exists
       final existingUser = await getUserByMobile(mobile);
       if (existingUser != null) {
         return {'success': false, 'message': 'Mobile number already registered'};
       }
 
-      // Hash password and generate token
       String hashedPassword = _hashPassword(password);
       String token = _generateToken();
 
-      // Insert into users table with default values
-      // await db.insert('users', {
-      //   'name': 'NA',
-      //   'mobile': mobile,
-      //   'email': 'NA@example.com',
-      //   'gender': 'NA',
-      //   'maritalStatus': 'NA',
-      //   'state': 'NA',
-      //   'educationalQualification': 'NA',
-      //   'timestamp': DateTime.now().toIso8601String(),
-      // });
-
-      // Insert into login table
       await db.insert('login', {
         'mobile': mobile,
         'password': hashedPassword,
         'token': token,
+        'role': selectedRole ?? 'Operator', // default fallback role
       });
 
       return {
         'success': true,
         'message': 'Registration successful',
         'token': token,
-        'mobile': mobile
+        'mobile': mobile,
+        'role': selectedRole,
       };
     } catch (e) {
       return {'success': false, 'message': 'Registration failed: ${e.toString()}'};
     }
   }
+
+  // Login user
   // Login user
   Future<Map<String, dynamic>> loginUser(String mobile, String password) async {
     final db = await database;
@@ -149,7 +143,6 @@ CREATE TABLE IF NOT EXISTS users (
       );
 
       if (result.isNotEmpty) {
-        // Generate and update new token
         String newToken = _generateToken();
         await db.update(
           'login',
@@ -158,17 +151,15 @@ CREATE TABLE IF NOT EXISTS users (
           whereArgs: [mobile],
         );
 
-        // Get user details
         final user = await getUserByMobile(mobile);
-        if (user == null) {
-          return {'success': false, 'message': 'User not found in user table'};
-        }
+        final role = result.first['role'] ?? 'Operator';
 
         return {
           'success': true,
           'message': 'Login successful',
           'token': newToken,
           'user': user,
+          'role': role,
         };
       } else {
         return {'success': false, 'message': 'Mobile number and Password do not match'};
@@ -177,7 +168,6 @@ CREATE TABLE IF NOT EXISTS users (
       return {'success': false, 'message': 'Login failed: ${e.toString()}'};
     }
   }
-
 
   // Verify token
   Future<UserModel?> getUserByToken(String token) async {

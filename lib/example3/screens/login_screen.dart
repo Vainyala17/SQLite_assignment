@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqlite_assignment/example3/screens/home_screen.dart';
 import '../db/database_helper.dart';
 import 'register_screen.dart';
-import 'plain_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const PlainScreen()),
+              MaterialPageRoute(builder: (context) => HomePage()),
             );
           }
         });
@@ -79,6 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
         final user = result['user'];
         if (user != null) {
           await prefs.setString('user_mobile', user.mobile);
+          await prefs.setString('user_role', user.role ?? '');
+
         }
 
         // Show success message
@@ -97,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const PlainScreen()),
+            MaterialPageRoute(builder: (context) => HomePage()),
           );
         }
       } else if (result['success'] == false) {
