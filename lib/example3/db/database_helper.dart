@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS users (
           'message': 'Login successful',
           'token': newToken,
           'user': user,
+          'mobile': mobile,
           'role': role,
         };
       } else {

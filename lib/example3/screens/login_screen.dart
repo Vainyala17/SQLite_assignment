@@ -77,12 +77,16 @@ class _LoginScreenState extends State<LoginScreen> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', result['token']);
         final user = result['user'];
+        final mobile = result['mobile']; // fallback
+
         if (user != null) {
           await prefs.setString('user_mobile', user.mobile);
           await prefs.setString('user_role', user.role ?? '');
-
+        } else {
+          // fallback if user is null but login was successful
+          await prefs.setString('user_mobile', mobile);
+          await prefs.setString('user_role', result['role'] ?? '');
         }
-
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

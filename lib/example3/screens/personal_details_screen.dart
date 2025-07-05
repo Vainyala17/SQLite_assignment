@@ -10,8 +10,6 @@ import '../widgets/custom_menu.dart';
 import '../model/user_model.dart';
 import '../../example3/db/database_helper.dart';
 import 'fetch_data_screen.dart';
-import 'login_screen.dart';
-// import 'login_screen.dart'; // Add this import for your LoginScreen
 
 class PersonalDetailsScreen extends StatefulWidget {
   final UserModel? editUser;
@@ -751,7 +749,6 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       }
 
       String? photoPath;
-
       // Handle image saving
       if (_selectedImage != null) {
         photoPath = await _saveImageToAppDirectory(_selectedImage!);
