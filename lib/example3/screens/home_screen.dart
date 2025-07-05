@@ -1,8 +1,10 @@
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/custom_drawer.dart';
 import '../widgets/custom_menu.dart';
+
 
 class HomePage extends StatefulWidget {
   @override
@@ -24,9 +26,10 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       userMobile = prefs.getString('user_mobile') ?? 'Unknown';
       userRole = prefs.getString('user_role') ?? 'Unknown';
+      print('📱 Fetched from SharedPrefs: user_mobile = $userMobile, user_role = $userRole');
+
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
